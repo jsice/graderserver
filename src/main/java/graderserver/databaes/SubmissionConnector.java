@@ -70,4 +70,19 @@ public class SubmissionConnector {
         return submission;
     }
 
+    public void updateSubmissionStatus(int id, SubmissionType newStatus) {
+        try {
+            connect();
+            String query = "UPDATE submissions SET status=? WHERE id=?";
+            PreparedStatement pstmt = this.conn.prepareStatement(query);
+            pstmt.setString(1, newStatus.toString());
+            pstmt.setInt(2, id);
+            pstmt.execute();
+            disconnect();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+    }
+
 }
