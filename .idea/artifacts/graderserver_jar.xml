@@ -1,0 +1,9 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="graderserver:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/graderserver_jar</output-path>
+    <root id="archive" name="graderserver.jar">
+      <element id="module-output" name="graderserver" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/xerial/sqlite-jdbc/3.25.2/sqlite-jdbc-3.25.2.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>
