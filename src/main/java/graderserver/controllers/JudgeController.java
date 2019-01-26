@@ -5,10 +5,7 @@ import graderserver.models.Problem;
 import graderserver.models.Submission;
 import graderserver.models.SubmissionType;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -76,6 +73,10 @@ public class JudgeController extends Thread {
                 BufferedReader compileErrorReader = new BufferedReader(new InputStreamReader(compileProcess.getErrorStream()));
                 compileError = compileErrorReader.readLine();
                 compileErrorReader.close();
+
+                if (new File(objectPath + objectName + ".class").exists()) {
+                    compileError = null;
+                }
             }
             if (compileError == null) {
                 for (int i = 0; i < problem.getInputFiles().size(); i++) {
@@ -143,6 +144,7 @@ public class JudgeController extends Thread {
 
                 }
             } else {
+                System.out.println("compile error: " + compileError);
                 newStatus = SubmissionType.CPE;
             }
 
