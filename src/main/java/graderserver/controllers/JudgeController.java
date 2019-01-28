@@ -32,8 +32,8 @@ public class JudgeController extends Thread {
 
     @Override
     public void run() {
+        Submission submission = this.db.getSubmissionById(id);
         try {
-            Submission submission = this.db.getSubmissionById(id);
             Problem problem = submission.getProblem();
             String problemPath = this.projectPath + "/storage/app/problems/" + problem.getId() + "/problemtestset/";
             String submissionPath = this.projectPath + "/storage/app/submissions/";
@@ -152,6 +152,7 @@ public class JudgeController extends Thread {
             this.db.updateSubmissionStatus(submission.getId(), newStatus);
         } catch (IOException e) {
             e.printStackTrace();
+            this.db.updateSubmissionStatus(submission.getId(), SubmissionType.CTA);
         }
     }
 
