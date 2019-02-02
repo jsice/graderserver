@@ -9,8 +9,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.time.Duration;
-import java.time.Instant;
+import java.util.concurrent.TimeUnit;
 
 public class JudgeController extends Thread {
 
@@ -23,11 +22,6 @@ public class JudgeController extends Thread {
         String dbPath = projectPath + "/database/database.sqlite";
         this.db = new SubmissionConnector(dbPath);
         this.id = id;
-    }
-
-    private static boolean isAlive(Process p) {
-        p.exitValue();
-        return true;
     }
 
     @Override
@@ -84,45 +78,41 @@ public class JudgeController extends Thread {
                     String outputPath = problemPath + problem.getOutputFiles().get(i);
                     String runtimeError;
                     String output;
-                    String command = "";
+                    String[] command = new String[]{"nocmd"};
                     if (submission.getLanguage().equals("c")) {
-                        command = String.format("%s", objectPath + objectName + ".exe");
+                        command = new String[] {objectPath + objectName + ".exe"};
                     } else if (submission.getLanguage().equals("cpp")) {
-                        command = String.format("%s", objectPath + objectName + ".exe");
+                        command = new String[] {objectPath + objectName + ".exe"};
                     } else if (submission.getLanguage().equals("java")) {
-                        command = String.format("java -cp %s %s", objectPath, objectName);
+                        command = new String[] {"java", "-cp", objectPath, objectName};
                     }
 
-                    Process runtimeProcess = Runtime.getRuntime().exec(command);
+                    ProcessBuilder runtimeProcessBuilder = new ProcessBuilder(command);
+                    runtimeProcessBuilder.redirectInput(new File(inputPath));
+                    runtimeProcessBuilder.redirectOutput(new File(objectPath + "output.txt"));
+                    runtimeProcessBuilder.redirectError(new File(objectPath + "runtimeError.txt"));
 
-                    OutputStream outputStream = runtimeProcess.getOutputStream();
-                    BufferedReader runtimeErrorReader = new BufferedReader(new InputStreamReader(runtimeProcess.getErrorStream()));
-                    BufferedReader outputReader = new BufferedReader(new InputStreamReader(runtimeProcess.getInputStream()));
 
-                    Files.copy(Paths.get(inputPath), outputStream);
+                    Process runtimeProcess = runtimeProcessBuilder.start();
 
-                    outputStream.flush();
-
-                    Instant start = Instant.now();
-
-                    Worker worker = new Worker(runtimeProcess);
-                    worker.start();
+                    long startTime = System.currentTimeMillis();
                     try {
-                        worker.join(timeout * 1000);
-                        if (worker.exit == null) {
-                            Instant end = Instant.now();
-                            System.out.println(Duration.between(start, end));
+                        if (runtimeProcess.waitFor(timeout, TimeUnit.SECONDS)) {
+                            long endTime = System.currentTimeMillis();
+                            System.out.println(endTime - startTime);
+                        } else {
+                            long endTime = System.currentTimeMillis();
+                            System.out.println(endTime - startTime);
                             newStatus = SubmissionType.TLE;
                             break;
-                        } else {
-                            System.out.println(Duration.between(start, worker.end));
                         }
                     } catch (InterruptedException ex) {
-                        worker.interrupt();
                         Thread.currentThread().interrupt();
                     } finally {
                         runtimeProcess.destroyForcibly();
                     }
+                    BufferedReader runtimeErrorReader = new BufferedReader(new FileReader(new File(objectPath + "runtimeError.txt")));
+                    BufferedReader outputReader = new BufferedReader(new FileReader(new File(objectPath + "output.txt")));
                     runtimeError = runtimeErrorReader.readLine();
                     if (runtimeError != null) {
                         System.out.println(runtimeError);
@@ -141,6 +131,8 @@ public class JudgeController extends Thread {
                             newStatus = SubmissionType.WAE;
                         }
                     }
+                    runtimeErrorReader.close();
+                    outputReader.close();
 
                 }
             } else {
@@ -164,24 +156,5 @@ public class JudgeController extends Thread {
         String s1 = text.trim();
         String s2 = fileToString(filePath).trim();
         return s1.equals(s2);
-    }
-
-    private static class Worker extends Thread {
-        private final Process process;
-        private Integer exit;
-        private Instant end;
-
-        private Worker(Process process) {
-            this.process = process;
-        }
-
-        public void run() {
-            try {
-                exit = process.waitFor();
-                end = Instant.now();
-            } catch (InterruptedException ignore) {
-                return;
-            }
-        }
     }
 }

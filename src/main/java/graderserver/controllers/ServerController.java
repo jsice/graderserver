@@ -10,7 +10,6 @@ import java.net.SocketException;
 
 public class ServerController extends Thread {
     private DatagramSocket socket;
-    private byte[] buffer = new byte[1024];
     private String projectPath;
 
     public ServerController(int port, String projectPath) throws SocketException {
@@ -19,6 +18,7 @@ public class ServerController extends Thread {
     }
 
     private DatagramPacket receive() throws IOException {
+        byte[] buffer = new byte[1024];
         DatagramPacket receivedPacket = new DatagramPacket(buffer, buffer.length);
         socket.receive(receivedPacket);
         return receivedPacket;
