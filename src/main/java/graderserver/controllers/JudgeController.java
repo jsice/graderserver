@@ -119,13 +119,7 @@ public class JudgeController extends Thread {
                         newStatus = SubmissionType.RTE;
                         break;
                     } else {
-                        output = "";
-                        String line;
-                        while ((line = outputReader.readLine()) != null) {
-                            output += line + "\n";
-                        }
-
-                        if (compareStringToFile(output, outputPath)) {
+                        if (compareFileToFile(objectPath + "output.txt", outputPath)) {
                             newStatus = SubmissionType.YES;
                         } else {
                             newStatus = SubmissionType.WAE;
@@ -150,6 +144,12 @@ public class JudgeController extends Thread {
 
     private String fileToString(String path) throws IOException {
         return new String(Files.readAllBytes(Paths.get(path)), StandardCharsets.UTF_8);
+    }
+
+    private boolean compareFileToFile(String filePath1, String filePath2) throws IOException {
+        String s1 = fileToString(filePath1).trim();
+        String s2 = fileToString(filePath2).trim();
+        return s1.equals(s2);
     }
 
     private boolean compareStringToFile(String text, String filePath) throws IOException {
